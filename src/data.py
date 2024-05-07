@@ -63,7 +63,7 @@ class data_preprocess(object):
     #     test_set = pd.DataFrame([[0,0],[0,0]],index=['row1','row2'],columns=['column1','column2'])
          
     #     train_set.to_csv(train_file_path,encoding = 'utf-8')
-    #     test_set.to_csv(test_file_path,encoding = 'utf-8')
+    #     test_set.to_csv(test_file_path,encoding = 'utf-8') 
 
 # 实现数据类型的转换    
 class data_trans(Dataset):

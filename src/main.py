@@ -2,7 +2,7 @@
 
 import os
 import time
-
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import torch
@@ -20,7 +20,7 @@ from modelbase import STA_LSTM as Net
 # from modelbase import SVM as Net
 
 '''****************************initialization*******************************''' 
-IN_DIM =  144       # 因变量 TX144，CH96，HH120
+IN_DIM =  96       # 因变量 TX144，CH96，HH120
 SEQUENCE_LENGTH = 12   # 时间序列长度，即为回溯期
 
 LSTM_IN_DIM = int(IN_DIM/SEQUENCE_LENGTH)     # LSTM的input大小,等于总的变量长度/时间序列长度
@@ -33,7 +33,7 @@ WEIGHT_DECAY = 1e-6    # L2惩罚项
 
 BATCH_SIZE = 200        # batch size
 
-EPOCHES = 180    # epoch大小
+EPOCHES = 50    # epoch大小
 
 TRAIN_PER = 0.80 # 训练集占比
 VALI_PER = 0.0 # 验证集占比
@@ -41,6 +41,8 @@ VALI_PER = 0.0 # 验证集占比
 # 判断是否采用GPU加速
 # USE_GPU = torch.cuda.is_available()
 USE_GPU = False
+
+
 
 '''****************************data prepration*******************************''' 
 # 准备好训练和测试数据
@@ -59,7 +61,7 @@ transform = transforms.Compose([transforms.ToTensor(),
 
 # data_trans返回的值是一个字典，内部包含数据和真值{'inputs':inputs,'groundtruth':groundtruths}
 
-# 准备训练集
+# 准备训练集+
 train_data_trans = data_trans(train_data,train_groundtruth,transform)
 
 train_dataloader = torch.utils.data.DataLoader(train_data_trans,
@@ -214,7 +216,22 @@ def main():
 
     result = pd.DataFrame(data = {'Q(t+1)':predictions,'Q(t+1)truth':test_groundtruth})
     result.to_csv('./data/output/out_t+1.csv')
-    
+    # Assuming 'result' is the DataFrame containing 'predictions' and 'test_groundtruth'
+    fig = plt.figure()
+    ax = fig.add_subplot()
+    color = 'tab:blue'
+    ax.set_xlabel('index')
+
+    ax.plot(result['Q(t+1)'], label='Prediction', linestyle='dashed')
+    ax.plot(result['Q(t+1)truth'], label='Ground Truth', linestyle='dashed')
+    ax.set_ylabel('Q(t+1)')
+    # ax.set_ylim(12, 4)  # Uncomment this line if you want to set a specific y-axis limit
+    ax.legend()
+
+    plt.suptitle('Prediction vs Ground Truth')
+
+    # Show the plot
+    plt.show()
     torch.save(net,'./models/sta_lstm_t+1.pth')
 
 if __name__ == '__main__':

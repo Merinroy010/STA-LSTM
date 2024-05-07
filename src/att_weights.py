@@ -36,7 +36,7 @@ class STA_LSTM(nn.Module):
         # 网络结构部分
 
         # batch_norm layer
-        self.batch_norm = nn.BatchNorm1d(in_dim)
+        self.bn = nn.BatchNorm1d(num_features=in_dim)
         
         # input layer
         self.layer_in = nn.Linear(in_dim, in_dim,bias=False)
@@ -61,7 +61,7 @@ class STA_LSTM(nn.Module):
     def forward (self,input):
 
         # 批归一化处理输入
-        out = self.batch_norm(input)
+        out = self.bn(input)
         # print('batch_norm',out.size())
 
         # 经过输入层处理

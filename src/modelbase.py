@@ -194,7 +194,7 @@ class STA_LSTM(nn.Module):
         # 网络结构部分
 
         # batch_norm layer
-        self.batch_norm = nn.BatchNorm1d(in_dim)
+        self.bn = nn.BatchNorm1d(num_features=in_dim)
         
         # input layer
         self.layer_in = nn.Linear(in_dim, in_dim,bias=False)
@@ -216,55 +216,100 @@ class STA_LSTM(nn.Module):
         self.relu = nn.ReLU()
         self.softmax = nn.Softmax()
 
-    def forward (self,input):
+    # def forward (self,input):
 
-        # 批归一化处理输入
-        out = self.batch_norm(input)
-        # print('batch_norm',out.size())
+    #     # 批归一化处理输入
+    #     # out = self.batch_norm(input)
+   
+        
+    #     # print('batch_norm',out.size())
 
-        # 经过输入层处理
-        out = self.layer_in(out)
-        # print('layer_in',out.size())
+    #     # 经过输入层处理
+    #     out = self.layer_in(out)
+    #     # print('layer_in',out.size())
          
-        # 初始化隐藏状态与记忆单元状态
-        h_t_1 = torch.zeros(out.size(0), self.lstm_hidden_dim) # batch, hidden_size
-        c_t_1 = torch.zeros(out.size(0), self.lstm_hidden_dim) # batch, hidden_size
+    #     # 初始化隐藏状态与记忆单元状态
+    #     h_t_1 = torch.zeros(out.size(0), self.lstm_hidden_dim) # batch, hidden_size
+    #     c_t_1 = torch.zeros(out.size(0), self.lstm_hidden_dim) # batch, hidden_size
       
-        # 创建一个列表，存储ht
+    #     # 创建一个列表，存储ht
+    #     h_list = []
+
+    #     for i in range(self.sequence_length):
+            
+    #         x_t = out[:,i*self.lstm_in_dim:(i+1)*(self.lstm_in_dim)]
+           
+    #         alpha_t =  self.sigmoid(self.S_A(x_t))
+
+    #         alpha_t = self.softmax(alpha_t)
+    #         # print(alpha_t)
+
+    #         h_t,c_t = self.lstmcell(x_t*alpha_t,(h_t_1,c_t_1)) 
+            
+    #         h_list.append(h_t)
+
+    #         h_t_1,c_t_1 = h_t,c_t
+        
+    #     total_ht = h_list[0]
+    #     for i in range(1,len(h_list)):
+    #         total_ht = torch.cat((total_ht,h_list[i]),1)    
+        
+    #     beta_t =  self.relu(self.T_A(total_ht))
+    #     beta_t = self.softmax(beta_t)
+    #     # print(beta_t)
+    #     out = torch.zeros(out.size(0), self.lstm_hidden_dim)
+    #     # print(h_list[i].size(),beta_t[:,1].size())
+
+    #     for i in range(len(h_list)):
+                      
+    #         out = out + h_list[i]*beta_t[:,i].reshape(out.size(0),1)
+
+    #     out = self.layer_out(out)
+        
+    #     return out
+
+
+
+    def forward(self, input):
+        # Batch normalization
+        out = self.bn(input)
+
+        # Input layer
+        out = self.layer_in(out)
+        
+        # Initialize hidden states
+        h_t_1 = torch.zeros(out.size(0), self.lstm_hidden_dim)
+        c_t_1 = torch.zeros(out.size(0), self.lstm_hidden_dim)
+        
+        # List to store h_t
         h_list = []
 
         for i in range(self.sequence_length):
-            
-            x_t = out[:,i*self.lstm_in_dim:(i+1)*(self.lstm_in_dim)]
-           
-            alpha_t =  self.sigmoid(self.S_A(x_t))
-
+            x_t = out[:, i * self.lstm_in_dim: (i + 1) * self.lstm_in_dim]
+            alpha_t = self.sigmoid(self.S_A(x_t))
             alpha_t = self.softmax(alpha_t)
-            # print(alpha_t)
-
-            h_t,c_t = self.lstmcell(x_t*alpha_t,(h_t_1,c_t_1)) 
-            
+            h_t, c_t = self.lstmcell(x_t * alpha_t, (h_t_1, c_t_1)) 
             h_list.append(h_t)
-
-            h_t_1,c_t_1 = h_t,c_t
+            h_t_1, c_t_1 = h_t, c_t
         
         total_ht = h_list[0]
-        for i in range(1,len(h_list)):
-            total_ht = torch.cat((total_ht,h_list[i]),1)    
+        for i in range(1, len(h_list)):
+            total_ht = torch.cat((total_ht, h_list[i]), 1)    
         
-        beta_t =  self.relu(self.T_A(total_ht))
+        beta_t = self.relu(self.T_A(total_ht))
         beta_t = self.softmax(beta_t)
-        # print(beta_t)
-        out = torch.zeros(out.size(0), self.lstm_hidden_dim)
-        # print(h_list[i].size(),beta_t[:,1].size())
 
+        out = torch.zeros(out.size(0), self.lstm_hidden_dim)
         for i in range(len(h_list)):
-                      
-            out = out + h_list[i]*beta_t[:,i].reshape(out.size(0),1)
+            out = out + h_list[i] * beta_t[:, i].reshape(out.size(0), 1)
 
         out = self.layer_out(out)
         
         return out
+
+
+
+
 
 class LSTM(nn.Module):
     
